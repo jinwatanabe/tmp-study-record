@@ -24,14 +24,14 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Check environment variables
+        run: echo "VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }} && VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}"
+
       - name: Run build
         run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-
-      - name: test secrets
-        run: echo secret "${{secrets.VITE_SUPABASE_URL }}" | sed 's/./& /g'
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
