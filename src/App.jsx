@@ -74,7 +74,7 @@ export const App = () => {
         <Loading />
       ) : (
         <>
-          <h1>学習記録一覧</h1>
+          <h1>☆学習記録一覧☆</h1>
           <div className="list-row">
             <p>学習内容</p>
             <input value={content} onChange={onChangeContent} type="text" />
