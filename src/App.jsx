@@ -1,6 +1,4 @@
 import { useEffect, useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import "./App.css";
 import { addContent, deleteContent, getAll } from "./utils/supabaseFunctions";
 import { Loading } from "./Loading";
@@ -74,7 +72,7 @@ export const App = () => {
         <Loading />
       ) : (
         <>
-          <h1>☆学習記録一覧☆</h1>
+          <h1 data-testid="title">☆学習記録一覧☆</h1>
           <div className="list-row">
             <p>学習内容</p>
             <input value={content} onChange={onChangeContent} type="text" />
