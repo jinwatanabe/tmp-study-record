@@ -19,6 +19,11 @@ jobs:
         run: npm install
       - name: Run build
         run: npm run build
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: build
+          path: dist
 
   deploy:
     name: deploy
@@ -32,12 +37,16 @@ jobs:
         with:
           node-version: "18"
           cache: "npm"
+      - name: Download build artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: build
+          path: dist # アップロードしたアーティファクトの保存先。プロジェクトに合わせて調整してください。
       - name: Install firebase-tools
         run: npm install --save-dev firebase-tools
       - name: Decode Firebase service account key
         run: |
           echo "${{ secrets.FIREBASE_KEY }}" | base64 -d > ./firebase-key.json
-          cat ./firebase-key.json # 確認用
           echo "GOOGLE_APPLICATION_CREDENTIALS=${{ github.workspace }}/firebase-key.json" >> $GITHUB_ENV
       - name: Extended Debug Information
         run: |
@@ -55,10 +64,16 @@ jobs:
           ./node_modules/.bin/firebase use --token ${{ secrets.FIREBASE_TOKEN }}
           echo "Attempting to use specific project:"
           ./node_modules/.bin/firebase use study-record-b64c4 --token ${{ secrets.FIREBASE_TOKEN }}
+      - name: Debug deployment
+        run: |
+          echo "Contents of deployment directory:"
+          ls -R dist
+          echo "Firebase configuration:"
+          cat firebase.json
       - name: Deploy to Firebase Hosting
         run: |
           ./node_modules/.bin/firebase use study-record-b64c4 --token ${{ secrets.FIREBASE_TOKEN }}
-          ./node_modules/.bin/firebase deploy --only hosting --project study-record-b64c4 --token ${{ secrets.FIREBASE_TOKEN }}
+          ./node_modules/.bin/firebase deploy --only hosting --project study-record-b64c4 --token ${{ secrets.FIREBASE_TOKEN }} --force
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase-key.json
           FIREBASE_CLI_EXPERIMENTS: webframeworks
