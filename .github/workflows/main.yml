@@ -1,84 +1,48 @@
-name: Scheduled deploy
+name: Deploy to Firebase Hosting
 
 on:
   push:
-  workflow_dispatch:
+    branches:
+      - main
 
 jobs:
-  build:
-    name: build
+  build_and_deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
           node-version: "18"
-      - name: Install dependencies
-        run: npm install
-      - name: Run build
-        run: npm run build
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: build
-          path: dist
 
-  deploy:
-    name: deploy
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Setup Node.js and cache
-        uses: actions/setup-node@v2
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check env vars
+        run: |
+          echo "VITE_SUPABASE_URL is set: ${{ secrets.VITE_SUPABASE_URL != '' }}"
+          echo "VITE_SUPABASE_ANON_KEY is set: ${{ secrets.VITE_SUPABASE_ANON_KEY != '' }}"
+
+      - name: Build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: npm run build
+
+      - name: Deploy to Firebase
+        uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          node-version: "18"
-          cache: "npm"
-      - name: Download build artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: build
-          path: dist # アップロードしたアーティファクトの保存先。プロジェクトに合わせて調整してください。
-      - name: Install firebase-tools
-        run: npm install --save-dev firebase-tools
-      - name: Decode Firebase service account key
-        run: |
-          echo "${{ secrets.FIREBASE_KEY }}" | base64 -d > ./firebase-key.json
-          echo "GOOGLE_APPLICATION_CREDENTIALS=${{ github.workspace }}/firebase-key.json" >> $GITHUB_ENV
-      - name: Extended Debug Information
-        run: |
-          echo "Firebase CLI version:"
-          ./node_modules/.bin/firebase --version
-          echo "Current project:"
-          ./node_modules/.bin/firebase use --token ${{ secrets.FIREBASE_TOKEN }}
-          echo "Available projects:"
-          ./node_modules/.bin/firebase projects:list --token ${{ secrets.FIREBASE_TOKEN }}
-          echo "Attempting to use specific project:"
-          ./node_modules/.bin/firebase use study-record-b64c4 --token ${{ secrets.FIREBASE_TOKEN }}
-      - name: Verify Firebase Project
-        run: |
-          echo "Current project:"
-          ./node_modules/.bin/firebase use --token ${{ secrets.FIREBASE_TOKEN }}
-          echo "Attempting to use specific project:"
-          ./node_modules/.bin/firebase use study-record-b64c4 --token ${{ secrets.FIREBASE_TOKEN }}
+          repoToken: "${{ secrets.GITHUB_TOKEN }}"
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_STUDY_RECORD_B64C4 }}"
+          channelId: live
+          projectId: study-record-b64c4
+        env:
+          FIREBASE_CLI_PREVIEWS: hostingchannels
+
       - name: Debug deployment
         run: |
           echo "Contents of deployment directory:"
           ls -R dist
           echo "Firebase configuration:"
           cat firebase.json
-      - name: Deploy to Firebase Hosting
-        run: |
-          ./node_modules/.bin/firebase use study-record-b64c4 --token ${{ secrets.FIREBASE_TOKEN }}
-          ./node_modules/.bin/firebase deploy --only hosting --project study-record-b64c4 --token ${{ secrets.FIREBASE_TOKEN }} --force
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase-key.json
-          FIREBASE_CLI_EXPERIMENTS: webframeworks
-          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-      - name: delete GOOGLE_APPLICATION_CREDENTIALS
-        run: rm $GOOGLE_APPLICATION_CREDENTIALS
-        if: ${{ always() }}
