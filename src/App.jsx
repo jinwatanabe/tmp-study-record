@@ -85,7 +85,7 @@ export const App = () => {
             <p>時間</p>
           </div>
           <div>
-            <p>入力されている学習内容：{content}</p>
+            <p>入力されている学習内容!：{content}</p>
             <p>入力されている時間：{time}時間</p>
             {/* </div>
           <ul>
