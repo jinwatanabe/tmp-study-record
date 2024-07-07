@@ -12,6 +12,12 @@ export const App = () => {
   const [srecords, setSRecords] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  console.log("VITE_SUPABASE_URL:", import.meta.env.VITE_SUPABASE_URL);
+  console.log(
+    "VITE_SUPABASE_ANON_KEY:",
+    import.meta.env.VITE_SUPABASE_ANON_KEY
+  );
+
   const onChangeContent = (event) => setContent(event.target.value);
 
   const onChangeTime = (event) => setTime(event.target.value);
