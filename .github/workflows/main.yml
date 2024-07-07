@@ -4,6 +4,10 @@ on:
   push:
   workflow_dispatch:
 
+env:
+  VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+  VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
 jobs:
   build:
     name: Build
@@ -55,8 +59,6 @@ jobs:
           ./node_modules/.bin/firebase deploy --only hosting
         env:
           FIREBASE_CLI_EXPERIMENTS: webframeworks
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       - name: Delete service account key
         run: rm $GOOGLE_APPLICATION_CREDENTIALS
         if: ${{ always() }}
