@@ -39,19 +39,26 @@ jobs:
           echo "${{ secrets.FIREBASE_KEY }}" | base64 -d > ./firebase-key.json
           cat ./firebase-key.json # 確認用
           echo "GOOGLE_APPLICATION_CREDENTIALS=${{ github.workspace }}/firebase-key.json" >> $GITHUB_ENV
-      - name: Debug information
+      - name: Extended Debug Information
         run: |
-          echo "Project ID: ${{ secrets.FIREBASE_PROJECT_ID }}"
-          echo "Workspace: ${{ github.workspace }}"
-          ls -l ${{ github.workspace }}
-          cat $GITHUB_ENV
-          ./node_modules/.bin/firebase projects:list --token ${{ secrets.FIREBASE_TOKEN }} # プロジェクトリストを表示
-      - name: Set Firebase Project
-        run: ./node_modules/.bin/firebase use ${{ secrets.FIREBASE_PROJECT_ID }}
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase-key.json
+          echo "Firebase CLI version:"
+          ./node_modules/.bin/firebase --version
+          echo "Current project:"
+          ./node_modules/.bin/firebase use --token ${{ secrets.FIREBASE_TOKEN }}
+          echo "Available projects:"
+          ./node_modules/.bin/firebase projects:list --token ${{ secrets.FIREBASE_TOKEN }}
+          echo "Attempting to use specific project:"
+          ./node_modules/.bin/firebase use study-record-b64c4 --token ${{ secrets.FIREBASE_TOKEN }}
+      - name: Verify Firebase Project
+        run: |
+          echo "Current project:"
+          ./node_modules/.bin/firebase use --token ${{ secrets.FIREBASE_TOKEN }}
+          echo "Attempting to use specific project:"
+          ./node_modules/.bin/firebase use study-record-b64c4 --token ${{ secrets.FIREBASE_TOKEN }}
       - name: Deploy to Firebase Hosting
-        run: ./node_modules/.bin/firebase deploy --only hosting --token ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          ./node_modules/.bin/firebase use study-record-b64c4 --token ${{ secrets.FIREBASE_TOKEN }}
+          ./node_modules/.bin/firebase deploy --only hosting --project study-record-b64c4 --token ${{ secrets.FIREBASE_TOKEN }}
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase-key.json
           FIREBASE_CLI_EXPERIMENTS: webframeworks
