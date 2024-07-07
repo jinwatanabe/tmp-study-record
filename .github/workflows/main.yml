@@ -37,19 +37,29 @@ jobs:
       - name: Decode Firebase service account key
         run: |
           echo "${{ secrets.FIREBASE_KEY }}" | base64 -d > ./firebase-key.json
+          cat ./firebase-key.json # 確認用
           echo "GOOGLE_APPLICATION_CREDENTIALS=${{ github.workspace }}/firebase-key.json" >> $GITHUB_ENV
-      - name: change space
-        run: ./node_modules/.bin/firebase use ${{ secrets.FIREBASE_PROJECT_ID }}
-      - name: Deploy to Firebase Hosting
+      - name: Authenticate with Firebase
+        run: ./node_modules/.bin/firebase login:ci --token ${{ secrets.FIREBASE_TOKEN }}
+      - name: Debug information
         run: |
-          ./node_modules/.bin/firebase deploy
+          echo "Project ID: ${{ secrets.FIREBASE_PROJECT_ID }}"
+          echo "Workspace: ${{ github.workspace }}"
+          ls -l ${{ github.workspace }}
+          cat $GITHUB_ENV
+          ./node_modules/.bin/firebase projects:list --token ${{ secrets.FIREBASE_TOKEN }} # プロジェクトリストを表示
+      - name: Set Firebase Project
+        run: ./node_modules/.bin/firebase use ${{ secrets.FIREBASE_PROJECT_ID }}
         env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase-key.json
+      - name: Deploy to Firebase Hosting
+        run: ./node_modules/.bin/firebase deploy --only hosting
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase-key.json
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
           FIREBASE_CLI_EXPERIMENTS: webframeworks
-          # エラー後に追記した場所
-          VITE_SUPABASE_URL: ${{secrets.VITE_SUPABASE_URL}}
-          VITE_SUPABASE_ANON_KEY: ${{secrets.VITE_SUPABASE_ANON_KEY}}
-          # エラー後に追記した場所
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       - name: delete GOOGLE_APPLICATION_CREDENTIALS
         run: rm $GOOGLE_APPLICATION_CREDENTIALS
         if: ${{ always() }}
